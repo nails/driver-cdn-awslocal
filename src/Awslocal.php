@@ -17,12 +17,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     public function __construct()
     {
         //  Shortcut to CDN Library (mainly for setting errors)
-        $this->cdn =& get_instance()->cdn;
-
-        // --------------------------------------------------------------------------
-
-        //  Load langfile
-        get_instance()->lang->load('cdn/cdn_driver_aws_local');
+        $this->oCdn =& get_instance()->cdn;
 
         // --------------------------------------------------------------------------
 
@@ -76,7 +71,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
     /**
      * Creates a new object
-     * @param  stdClass $data Data to create the object with
+     * @param  stdClass $oData Data to create the object with
      * @return boolean
      */
     public function objectCreate($oData)
@@ -122,13 +117,13 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
                 return true;
 
-            } catch (Exception $oE) {
+            } catch (\Exception $oE) {
 
                 $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
                 return false;
             }
 
-        } catch (Exception $oE) {
+        } catch (\Exception $oE) {
 
             $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
             return false;
@@ -172,7 +167,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
             $this->oS3->deleteObjects($aOptions);
             return true;
 
-        } catch (Exception $oE) {
+        } catch (\Exception $oE) {
 
             $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
             return false;
@@ -253,7 +248,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
                 return true;
 
-            } catch (Exception $oE) {
+            } catch (\Exception $oE) {
 
                 $this->oCdn->set_error('AWS-SDK ERROR: ' . $oE->getMessage());
                 return false;
@@ -280,7 +275,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
             $this->oS3->deleteMatchingObjects($this->sS3Bucket, $sBucket . '/');
             return true;
 
-        } catch (Exception $oE) {
+        } catch (\Exception $oE) {
 
             $this->oCdn->set_error('AWS-SDK ERROR: ' . $oE->getMessage());
             return false;
