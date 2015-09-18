@@ -4,16 +4,16 @@ namespace Nails\Cdn\Driver;
 
 class Awslocal implements \Nails\Cdn\Interfaces\Driver
 {
-    private $cdn;
-    private $bucketUrl;
-    private $bucket;
-    private $s3;
+    private $oCdn;
+    private $sBucketUrl;
+    private $sS3Bucket;
+    private $oS3;
 
     // --------------------------------------------------------------------------
 
     /**
      * Constructor
-     **/
+     */
     public function __construct()
     {
         //  Shortcut to CDN Library (mainly for setting errors)
@@ -54,7 +54,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
         // --------------------------------------------------------------------------
 
         //  Instanciate the AWS PHP SDK
-        $this->s3 = S3Client::factory(array(
+        $this->oS3 = S3Client::factory(array(
             'key'    => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID,
             'secret' => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET,
         ));
@@ -62,12 +62,12 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
         // --------------------------------------------------------------------------
 
         //  Set the bucket we're using
-        $this->bucket = DEPLOY_CDN_DRIVER_AWS_S3_BUCKET;
+        $this->sS3Bucket = DEPLOY_CDN_DRIVER_AWS_S3_BUCKET;
 
         // --------------------------------------------------------------------------
 
         //  Finally, define the bucket endpoint/url, in case they change it.
-        $this->bucketUrl = '.s3.amazonaws.com/';
+        $this->sBucketUrl = '.s3.amazonaws.com/';
     }
 
     /**
@@ -78,28 +78,28 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
      * Creates a new object
      * @param  stdClass $data Data to create the object with
      * @return boolean
-     **/
-    public function object_create($data)
+     */
+    public function objectCreate($oData)
     {
-        $bucket       = ! empty($data->bucket->slug) ? $data->bucket->slug : '';
-        $filenameOrig = ! empty($data->filename)     ? $data->filename     : '';
+        $sBucket       = ! empty($oData->bucket->slug) ? $oData->bucket->slug : '';
+        $sFilenameOrig = ! empty($oData->filename) ? $oData->filename : '';
 
-        $filename  = strtolower(substr($filenameOrig, 0, strrpos($filenameOrig, '.')));
-        $extension = strtolower(substr($filenameOrig, strrpos($filenameOrig, '.')));
+        $sFilename  = strtolower(substr($sFilenameOrig, 0, strrpos($sFilenameOrig, '.')));
+        $mSextension = strtolower(substr($sFilenameOrig, strrpos($sFilenameOrig, '.')));
 
-        $source = ! empty($data->file) ? $data->file : '';
-        $mime   = ! empty($data->mime) ? $data->mime : '';
-        $name   = ! empty($data->name) ? $data->name : 'file' . $extension;
+        $sSource = ! empty($oData->file) ? $oData->file : '';
+        $sMime   = ! empty($oData->mime) ? $oData->mime : '';
+        $sName   = ! empty($oData->name) ? $oData->name : 'file' . $mSextension;
 
         // --------------------------------------------------------------------------
 
         try {
 
-            $this->s3->putObject(array(
-                'Bucket'      => $this->bucket,
-                'Key'         => $bucket . '/' . $filename . $extension,
-                'SourceFile'  => $source,
-                'ContentType' => $mime,
+            $this->oS3->putObject(array(
+                'Bucket'      => $this->sS3Bucket,
+                'Key'         => $sBucket . '/' . $sFilename . $mSextension,
+                'SourceFile'  => $sSource,
+                'ContentType' => $sMime,
                 'ACL'         => 'public-read'
             ));
 
@@ -110,27 +110,27 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
             try {
 
-                $this->s3->copyObject(array(
-                    'Bucket'             => $this->bucket,
-                    'CopySource'         => $this->bucket . '/' . $bucket . '/' . $filename . $extension,
-                    'Key'                => $bucket . '/' . $filename . '-download' . $extension,
+                $this->oS3->copyObject(array(
+                    'Bucket'             => $this->sS3Bucket,
+                    'CopySource'         => $this->sS3Bucket . '/' . $sBucket . '/' . $sFilename . $mSextension,
+                    'Key'                => $sBucket . '/' . $sFilename . '-download' . $mSextension,
                     'ContentType'        => 'application/octet-stream',
-                    'ContentDisposition' => 'attachment; filename="' . str_replace('"', '', $name) . '" ',
+                    'ContentDisposition' => 'attachment; filename="' . str_replace('"', '', $sName) . '" ',
                     'MetadataDirective'  => 'REPLACE',
                     'ACL'                => 'public-read'
                 ));
 
                 return true;
 
-            } catch (Exception $e) {
+            } catch (Exception $oE) {
 
-                $this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
+                $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
                 return false;
             }
 
-        } catch (Exception $e) {
+        } catch (Exception $oE) {
 
-            $this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
+            $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
             return false;
         }
     }
@@ -139,41 +139,42 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
     /**
      * Determines whether an object exists or not
-     * @param  string $filename The object's filename
-     * @param  string $bucket   The bucket's slug
+     * @param  string $sFilename The object's filename
+     * @param  string $sBucket   The bucket's slug
      * @return boolean
      */
-    public function object_exists($filename, $bucket)
+    public function objectExists($sFilename, $sBucket)
     {
-        return $this->s3->doesObjectExist($bucket, $filename);
+        return $this->oS3->doesObjectExist($sBucket, $sFilename);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Destroys (permenantly deletes) an object
-     * @return  boolean
-     **/
-    public function object_destroy($object, $bucket)
+     * @param  string $sObject The object's filename
+     * @param  string $sBucket The bucket's slug
+     * @return boolean
+     */
+    public function objectDestroy($sObject, $sBucket)
     {
         try {
 
-            $filename  = strtolower(substr($object, 0, strrpos($object, '.')));
-            $extension = strtolower(substr($object, strrpos($object, '.')));
+            $sFilename  = strtolower(substr($sObject, 0, strrpos($sObject, '.')));
+            $mSextension = strtolower(substr($sObject, strrpos($sObject, '.')));
 
-            $options              = array();
-            $options['Bucket']    = $this->bucket;
-            $options['Objects']   = array();
-            $options['Objects'][] = array('Key' => $bucket . '/' . $filename . $extension);
-            $options['Objects'][] = array('Key' => $bucket . '/' . $filename . '-download' . $extension);
+            $aOptions              = array();
+            $aOptions['Bucket']    = $this->sS3Bucket;
+            $aOptions['Objects']   = array();
+            $aOptions['Objects'][] = array('Key' => $sBucket . '/' . $sFilename . $mSextension);
+            $aOptions['Objects'][] = array('Key' => $sBucket . '/' . $sFilename . '-download' . $mSextension);
 
-            $this->s3->deleteObjects($options);
-
+            $this->oS3->deleteObjects($aOptions);
             return true;
 
-        } catch (Exception $e) {
+        } catch (Exception $oE) {
 
-            $this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
+            $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
             return false;
         }
     }
@@ -182,46 +183,46 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
     /**
      * Returns a local path for an object
-     * @param  string $bucket   The bucket's slug
-     * @param  string $filename The filename
-     * @return mixed            string on success, false on failure
+     * @param  string $sBucket   The bucket's slug
+     * @param  string $sFilename The filename
+     * @return mixed             String on success, false on failure
      */
-    public function object_local_path($bucket, $filename)
+    public function objectLocalPath($sBucket, $sFilename)
     {
         //  Do we have the original sourcefile?
-        $extension = strtolower(substr($filename, strrpos($filename, '.')));
-        $filename  = strtolower(substr($filename, 0, strrpos($filename, '.')));
-        $srcFile   = DEPLOY_CACHE_DIR . $bucket . '-' . $filename . '-SRC' . $extension;
+        $mSextension = strtolower(substr($sFilename, strrpos($sFilename, '.')));
+        $sFilename  = strtolower(substr($sFilename, 0, strrpos($sFilename, '.')));
+        $sSrcFile   = DEPLOY_CACHE_DIR . $sBucket . '-' . $sFilename . '-SRC' . $mSextension;
 
         //  Check filesystem for sourcefile
-        if (file_exists($srcFile)) {
+        if (file_exists($sSrcFile)) {
 
             //  Yup, it's there, so use it
-            return $srcFile;
+            return $sSrcFile;
 
         } else {
 
             //  Doesn't exist, attempt to fetch from S3
             try {
 
-                $this->s3->getObject(array(
-                    'Bucket' => $this->bucket,
-                    'Key'    => $bucket . '/' . $filename . $extension,
-                    'SaveAs' => $srcFile
+                $this->oS3->getObject(array(
+                    'Bucket' => $this->sS3Bucket,
+                    'Key'    => $sBucket . '/' . $sFilename . $mSextension,
+                    'SaveAs' => $sSrcFile
                 ));
 
-                return $srcFile;
+                return $sSrcFile;
 
-            } catch (\Aws\S3\Exception\S3Exception $e) {
+            } catch (\Aws\S3\Exception\S3Exception $oE) {
 
                 //  Clean up
-                if (file_exists($srcFile)) {
+                if (file_exists($sSrcFile)) {
 
-                    unlink($srcFile);
+                    unlink($sSrcFile);
                 }
 
                 //  Note the error
-                $this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
+                $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
 
                 return false;
             }
@@ -234,27 +235,27 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
     /**
      * Creates a new bucket
-     * @param  string $bucket The bucket's slug
-     * @return  boolean
-     **/
-    public function bucket_create($bucket)
+     * @param  string  $sBucket The bucket's slug
+     * @return boolean
+     */
+    public function bucketCreate($sBucket)
     {
         //  Attempt to create a 'folder' object on S3
-        if (!$this->s3->doesObjectExist($this->bucket, $bucket . '/')) {
+        if (!$this->oS3->doesObjectExist($this->sS3Bucket, $sBucket . '/')) {
 
             try {
 
-                $this->s3->putObject(array(
-                    'Bucket' => $this->bucket,
-                    'Key'    => $bucket . '/',
+                $this->oS3->putObject(array(
+                    'Bucket' => $this->sS3Bucket,
+                    'Key'    => $sBucket . '/',
                     'Body'   => ''
                 ));
 
                 return true;
 
-            } catch (Exception $e) {
+            } catch (Exception $oE) {
 
-                $this->cdn->set_error('AWS-SDK ERROR: ' . $e->getMessage());
+                $this->oCdn->set_error('AWS-SDK ERROR: ' . $oE->getMessage());
                 return false;
             }
 
@@ -269,20 +270,19 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
     /**
      * Deletes an existing bucket
-     * @param  string $bucket The bucket's slug
+     * @param  string  $sBucket The bucket's slug
      * @return boolean
      */
-    public function bucket_destroy($bucket)
+    public function bucketDestroy($sBucket)
     {
         try {
 
-            $this->s3->deleteMatchingObjects($this->bucket, $bucket . '/');
-
+            $this->oS3->deleteMatchingObjects($this->sS3Bucket, $sBucket . '/');
             return true;
 
-        } catch (Exception $e) {
+        } catch (Exception $oE) {
 
-            $this->cdn->set_error('AWS-SDK ERROR: ' . $e->getMessage());
+            $this->oCdn->set_error('AWS-SDK ERROR: ' . $oE->getMessage());
             return false;
         }
     }
@@ -292,17 +292,18 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
      */
 
     /**
-     * Generates the correct URL for serving up a file
-     * @param   string  $bucket The bucket which the image resides in
-     * @param   string  $object The filename of the object
-     * @return  string
-     **/
-    public function url_serve($object, $bucket, $forceDownload)
+     * Generates the correct URL for serving a file
+     * @param  string  $sObject        The object to serve
+     * @param  string  $sBucket        The bucket to serve from
+     * @param  boolean $bForceDownload Whether to force a download
+     * @return string
+     */
+    public function urlServe($sObject, $sBucket, $bForceDownload = false)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
-        $out .= $bucket . '/';
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
+        $sUrl .= $sBucket . '/';
 
-        if ($forceDownload) {
+        if ($bForceDownload) {
 
             /**
              * If we're forcing the download we need to reference a slightly different file.
@@ -311,35 +312,35 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
              * as oppossed to renders it
              */
 
-            $filename  = strtolower(substr($object, 0, strrpos($object, '.')));
-            $extension = strtolower(substr($object, strrpos($object, '.')));
+            $sFilename  = strtolower(substr($sObject, 0, strrpos($sObject, '.')));
+            $mSextension = strtolower(substr($sObject, strrpos($sObject, '.')));
 
-            $out .= $filename;
-            $out .= '-download';
-            $out .= $extension;
+            $sUrl .= $sFilename;
+            $sUrl .= '-download';
+            $sUrl .= $mSextension;
 
         } else {
 
             //  If we're not forcing the download we can serve straight out of S3
-            $out .= $object;
+            $sUrl .= $sObject;
         }
 
-        return $this->urlMakeSecure($out, false);
+        return $this->urlMakeSecure($sUrl, false);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Returns the scheme of 'serve' URLs
-     * @param  boolean $forceDownload Whetehr or not to force download
+     * @param  boolean $bForceDownload Whetehr or not to force download
      * @return string
      */
-    public function url_serve_scheme($forceDownload)
+    public function urlServeScheme($bForceDownload = false)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
-        $out .= '{{bucket}}/';
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
+        $sUrl .= '{{bucket}}/';
 
-        if ($forceDownload) {
+        if ($bForceDownload) {
 
             /**
              * If we're forcing the download we need to reference a slightly different file.
@@ -348,33 +349,33 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
              * as oppossed to renders it
              */
 
-            $out .= '{{filename}}-download{{extension}}';
+            $sUrl .= '{{filename}}-download{{extension}}';
 
         } else {
 
             //  If we're not forcing the download we can serve straight out of S3
-            $out .= '{{filename}}{{extension}}';
+            $sUrl .= '{{filename}}{{extension}}';
         }
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Generates a URL for serving zipped objects
-     * @param  string $objectIds A comma seperated list of object IDs
-     * @param  string $hash      The security hash
-     * @param  string $filename  The filename ot give the zip file
+     * @param  string $sObjectIds A comma seperated list of object IDs
+     * @param  string $sHash      The security hash
+     * @param  string $sFilename  The filename to give the zip file
      * @return string
      */
-    public function url_serve_zipped($objectIds, $hash, $filename)
+    public function urlServeZipped($sObjectIds, $sHash, $sFilename)
     {
-        $filename = $filename ? '/' . urlencode($filename) : '';
+        $sFilename = $sFilename ? '/' . urlencode($sFilename) : '';
 
-        $out = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'zip/' . $objectIds . '/' . $hash . $filename;
+        $sUrl = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'zip/' . $sObjectIds . '/' . $sHash . $sFilename;
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
@@ -382,66 +383,65 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     /**
      * Returns the scheme of 'zipped' urls
      * @return  string
-     **/
-    public function url_serve_zipped_scheme()
+     */
+    public function urlServeZippedScheme()
     {
-        $out = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'zip/{{ids}}/{{hash}}/{{filename}}';
-
-        return $this->urlMakeSecure($out);
+        $sUrl = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'zip/{{ids}}/{{hash}}/{{filename}}';
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Generates the correct URL for using the thumb utility
-     * @param   string  $bucket The bucket which the image resides in
-     * @param   string  $object The filename of the image we're 'thumbing'
-     * @param   string  $width  The width of the thumbnail
-     * @param   string  $height The height of the thumbnail
+     * Generates the correct URL for using the crop utility
+     * @param   string  $sBucket The bucket which the image resides in
+     * @param   string  $sObject The filename of the image we're cropping
+     * @param   integer $iWidth  The width of the cropped image
+     * @param   integer $iHeight The height of the cropped image
      * @return  string
-     **/
-    public function url_thumb($object, $bucket, $width, $height)
+     */
+    public function urlCrop($sObject, $sBucket, $iWidth, $iHeight)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'thumb/';
-        $out .= $width . '/' . $height . '/';
-        $out .= $bucket . '/';
-        $out .= $object;
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'crop/';
+        $sUrl .= $iWidth . '/' . $iHeight . '/';
+        $sUrl .= $sBucket . '/';
+        $sUrl .= $sObject;
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Returns the scheme of 'thumb' urls
+     * Returns the scheme of 'crop' urls
      * @return  string
-     **/
-    public function url_thumb_scheme()
+     */
+    public function urlCropScheme()
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
+        $sUrl .= 'crop/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Generates the correct URL for using the scale utility
-     * @param   string  $bucket The bucket which the image resides in
-     * @param   string  $object The filename of the image we're 'scaling'
-     * @param   string  $width  The width of the scaled image
-     * @param   string  $height The height of the scaled image
+     * @param   string  $sBucket The bucket which the image resides in
+     * @param   string  $sObject The filename of the image we're 'scaling'
+     * @param   integer $iWidth  The width of the scaled image
+     * @param   integer $iHeight The height of the scaled image
      * @return  string
-     **/
-    public function url_scale($object, $bucket, $width, $height)
+     */
+    public function urlScale($sObject, $sBucket, $iWidth, $iHeight)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'scale/';
-        $out .= $width . '/' . $height . '/';
-        $out .= $bucket . '/';
-        $out .= $object;
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'scale/';
+        $sUrl .= $iWidth . '/' . $iHeight . '/';
+        $sUrl .= $sBucket . '/';
+        $sUrl .= $sObject;
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
@@ -449,30 +449,30 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     /**
      * Returns the scheme of 'scale' urls
      * @return  string
-     **/
-    public function url_scale_scheme()
+     */
+    public function urlScaleScheme()
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
+        $sUrl .= 'scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Generates the correct URL for using the placeholder utility
-     * @param   int     $width  The width of the placeholder
-     * @param   int     $height The height of the placeholder
-     * @param   int     border  The width of the border round the placeholder
+     * @param   integer $iWidth  The width of the placeholder
+     * @param   integer $iHeight The height of the placeholder
+     * @param   integer $iBorder The width of the border round the placeholder
      * @return  string
-     **/
-    public function url_placeholder($width = 100, $height = 100, $border = 0)
+     */
+    public function urlPlaceholder($iWidth, $iHeight, $iBorder = 0)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'placeholder/';
-        $out .= $width . '/' . $height . '/' . $border;
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'placeholder/';
+        $sUrl .= $iWidth . '/' . $iHeight . '/' . $iBorder;
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
@@ -480,30 +480,30 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     /**
      * Returns the scheme of 'placeholder' urls
      * @return  string
-     **/
-    public function url_placeholder_scheme()
+     */
+    public function urlPlaceholderScheme()
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'placeholder/{{width}}/{{height}}/{{border}}';
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
+        $sUrl .= 'placeholder/{{width}}/{{height}}/{{border}}';
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Generates the correct URL for a blank avatar
-     * @param   int     $width  The width of the placeholder
-     * @param   int     $height The height of the placeholder
-     * @param   int     border  The width of the border round the placeholder
-     * @return  string
-     **/
-    public function url_blank_avatar($width = 100, $height = 100, $sex = 'male')
+     * @param  integer        $iWidth  The width fo the avatar
+     * @param  integer        $iHeight The height of the avatar§
+     * @param  string|integer $mSex    What gender the avatar should represent
+     * @return string
+     */
+    public function urlBlankAvatar($iWidth, $iHeight, $mSex = '')
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'blank_avatar/';
-        $out .= $width . '/' . $height . '/' . $sex;
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'blank_avatar/';
+        $sUrl .= $iWidth . '/' . $iHeight . '/' . $mSex;
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
@@ -511,48 +511,48 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     /**
      * Returns the scheme of 'blank_avatar' urls
      * @return  string
-     **/
-    public function url_blank_avatar_scheme()
+     */
+    public function urlBlankAvatarScheme()
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'blank_avatar/{{width}}/{{height}}/{{sex}}';
+        $sUrl  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
+        $sUrl .= 'blank_avatar/{{width}}/{{height}}/{{sex}}';
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Generates a properly hashed expiring url
-     * @param  string  $bucket        The bucket which the image resides in
-     * @param  string  $object        The object to be served
-     * @param  string  $expires       The length of time the URL should be valid for, in seconds
-     * @param  boolean $forceDownload Whether to force a download
+     * @param  string  $sBucket        The bucket which the image resides in
+     * @param  string  $sObject        The object to be served
+     * @param  integer $iExpires       The length of time the URL should be valid for, in seconds
+     * @param  boolean $bForceDownload Whether to force a download
      * @return string
-     **/
-    public function url_expiring($object, $bucket, $expires, $forceDownload = false)
+     */
+    public function urlExpiring($sObject, $sBucket, $iExpires, $bForceDownload = false)
     {
         /**
-         * @todo: If cloudfront is configured, then generate a secure url and pass
+         * @todo: If CloudFront is configured, then generate a secure url and pass
          * back, if not serve through the processing mechanism. Maybe.
          */
 
         //  Hash the expiry time
-        $hash  = $bucket . '|' . $object . '|' . $expires . '|' . time() . '|';
-        $hash .= md5(time() . $bucket . $object . $expires . APP_PRIVATE_KEY);
-        $hash  = get_instance()->encrypt->encode($hash, APP_PRIVATE_KEY);
-        $hash  = urlencode($hash);
+        $sHash  = $sBucket . '|' . $sObject . '|' . $iExpires . '|' . time() . '|';
+        $sHash .= md5(time() . $sBucket . $sObject . $iExpires . APP_PRIVATE_KEY);
+        $sHash  = get_instance()->encrypt->encode($sHash, APP_PRIVATE_KEY);
+        $sHash  = urlencode($sHash);
 
-        $out = 'serve?token=' . $hash;
+        $sUrl = 'serve?token=' . $sHash;
 
-        if ($forceDownload) {
+        if ($bForceDownload) {
 
-            $out .= '&dl=1';
+            $sUrl .= '&dl=1';
         }
 
-        $out = site_url($out);
+        $sUrl = site_url($sUrl);
 
-        return $this->urlMakeSecure($out);
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
@@ -560,40 +560,40 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     /**
      * Returns the scheme of 'expiring' urls
      * @return  string
-     **/
-    public function url_expiring_scheme()
+     */
+    public function urlExpiringScheme()
     {
-        $out = site_url('serve?token={{token}}');
-
-        return $this->urlMakeSecure($out);
+        $sUrl = site_url('serve?token={{token}}');
+        return $this->urlMakeSecure($sUrl);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Formats a URL and makes it secure if needed
-     * @param  string $url The URL to secure
+     * @param  string  $sUrl          The URL to secure
+     * @param  boolean $bIsProcessing Whether it's a processing type URL
      * @return string
      */
-    protected function urlMakeSecure($url, $isProcessing = true)
+    protected function urlMakeSecure($sUrl, $bIsProcessing = true)
     {
         if (isPageSecure()) {
 
             //  Make the URL secure
-            if ($isProcessing) {
+            if ($bIsProcessing) {
 
-                $search  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-                $replace = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING_SECURE;
+                $sSearch  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
+                $sReplace = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING_SECURE;
 
             } else {
 
-                $search  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
-                $replace = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING_SECURE;
+                $sSearch  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
+                $sReplace = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING_SECURE;
             }
 
-            $url = str_replace($search, $replace, $url);
+            $sUrl = str_replace($sSearch, $sReplace, $sUrl);
         }
 
-        return $url;
+        return $sUrl;
     }
 }
