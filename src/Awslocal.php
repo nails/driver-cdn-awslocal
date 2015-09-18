@@ -49,7 +49,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
         // --------------------------------------------------------------------------
 
         //  Instanciate the AWS PHP SDK
-        $this->oS3 = S3Client::factory(array(
+        $this->oS3 = \Aws\S3\S3Client::factory(array(
             'key'    => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID,
             'secret' => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET,
         ));
