@@ -19,6 +19,9 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "require": {
+        "aws/aws-sdk-php": "~2.4.5"
+    },
     "require-dev":
     {
         "phpunit/phpunit": "4.*"
