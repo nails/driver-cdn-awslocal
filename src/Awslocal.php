@@ -14,12 +14,9 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct($oCdn)
     {
-        //  Shortcut to CDN Library (mainly for setting errors)
-        $this->oCdn =& get_instance()->cdn;
-
-        // --------------------------------------------------------------------------
+        $this->oCdn = $oCdn;
 
         /**
          * Check all the constants are defined properly
