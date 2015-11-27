@@ -2,6 +2,6 @@
 
 namespace Nails\Cdn\Driver;
 
-class AwslocalTest extends \PHPUnit_Framework_TestCase
+class AwsLocalTest extends \PHPUnit_Framework_TestCase
 {
 }

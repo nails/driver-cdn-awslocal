@@ -2,22 +2,23 @@
 
 namespace Nails\Cdn\Driver;
 
+use Nails\Cdn\Exception\CdnDriverException;
+use Aws\S3\S3Client;
+use Aws\S3\Exception\S3Exception;
+
 class Awslocal implements \Nails\Cdn\Interfaces\Driver
 {
-    private $oCdn;
-    private $sBucketUrl;
-    private $sS3Bucket;
-    private $oS3;
+    protected $aErrors;
+    protected $sS3Bucket;
+    protected $oS3;
 
     // --------------------------------------------------------------------------
 
     /**
      * Constructor
      */
-    public function __construct($oCdn)
+    public function __construct()
     {
-        $this->oCdn = $oCdn;
-
         /**
          * Check all the constants are defined properly
          * DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID
@@ -26,40 +27,52 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
          */
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID')) {
-
-            //  @todo: Specify correct lang
-            show_error(lang('cdn_error_not_configured'));
+            throw new CdnDriverException('Constant "DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID" is not defined', 1);
         }
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET')) {
-
-            //  @todo: Specify correct lang
-            show_error(lang('cdn_error_not_configured'));
+            throw new CdnDriverException('Constant "DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET" is not defined', 2);
         }
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_S3_BUCKET')) {
-
-            //  @todo: Specify correct lang
-            show_error(lang('cdn_error_not_configured'));
+            throw new CdnDriverException('Constant "DEPLOY_CDN_DRIVER_AWS_S3_BUCKET" is not defined', 3);
         }
 
         // --------------------------------------------------------------------------
 
         //  Instanciate the AWS PHP SDK
-        $this->oS3 = \Aws\S3\S3Client::factory(array(
+        $this->oS3 = S3Client::factory(array(
             'key'    => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID,
             'secret' => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET,
         ));
 
-        // --------------------------------------------------------------------------
-
         //  Set the bucket we're using
         $this->sS3Bucket = DEPLOY_CDN_DRIVER_AWS_S3_BUCKET;
+    }
 
-        // --------------------------------------------------------------------------
+    /**
+     * ERROR METHODS
+     */
 
-        //  Finally, define the bucket endpoint/url, in case they change it.
-        $this->sBucketUrl = '.s3.amazonaws.com/';
+    /**
+     * Adds an error to the stack
+     * @param string $sError The error string
+     */
+    protected function setError($sError) {
+        if (!empty($sError)) {
+            $this->aErrors[] = $sError;
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the last error to occur
+     * @return string
+     */
+    public function lastError()
+    {
+        return end($this->aErrors);
     }
 
     /**
@@ -73,15 +86,15 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
      */
     public function objectCreate($oData)
     {
-        $sBucket       = ! empty($oData->bucket->slug) ? $oData->bucket->slug : '';
-        $sFilenameOrig = ! empty($oData->filename) ? $oData->filename : '';
+        $sBucket       = !empty($oData->bucket->slug) ? $oData->bucket->slug : '';
+        $sFilenameOrig = !empty($oData->filename) ? $oData->filename : '';
 
         $sFilename  = strtolower(substr($sFilenameOrig, 0, strrpos($sFilenameOrig, '.')));
         $mSextension = strtolower(substr($sFilenameOrig, strrpos($sFilenameOrig, '.')));
 
-        $sSource = ! empty($oData->file) ? $oData->file : '';
-        $sMime   = ! empty($oData->mime) ? $oData->mime : '';
-        $sName   = ! empty($oData->name) ? $oData->name : 'file' . $mSextension;
+        $sSource = !empty($oData->file) ? $oData->file : '';
+        $sMime   = !empty($oData->mime) ? $oData->mime : '';
+        $sName   = !empty($oData->name) ? $oData->name : 'file' . $mSextension;
 
         // --------------------------------------------------------------------------
 
@@ -116,13 +129,13 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
             } catch (\Exception $oE) {
 
-                $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
+                $this->setError('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
                 return false;
             }
 
         } catch (\Exception $oE) {
 
-            $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
+            $this->setError('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
             return false;
         }
     }
@@ -166,7 +179,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
         } catch (\Exception $oE) {
 
-            $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
+            $this->setError('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
             return false;
         }
     }
@@ -205,7 +218,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
                 return $sSrcFile;
 
-            } catch (\Aws\S3\Exception\S3Exception $oE) {
+            } catch (S3Exception $oE) {
 
                 //  Clean up
                 if (file_exists($sSrcFile)) {
@@ -214,7 +227,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
                 }
 
                 //  Note the error
-                $this->oCdn->set_error('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
+                $this->setError('AWS-SDK EXCEPTION: ' . get_class($oE) . ': ' . $oE->getMessage());
 
                 return false;
             }
@@ -247,7 +260,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
             } catch (\Exception $oE) {
 
-                $this->oCdn->set_error('AWS-SDK ERROR: ' . $oE->getMessage());
+                $this->setError('AWS-SDK ERROR: ' . $oE->getMessage());
                 return false;
             }
 
@@ -274,7 +287,7 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
 
         } catch (\Exception $oE) {
 
-            $this->oCdn->set_error('AWS-SDK ERROR: ' . $oE->getMessage());
+            $this->setError('AWS-SDK ERROR: ' . $oE->getMessage());
             return false;
         }
     }
