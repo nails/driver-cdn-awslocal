@@ -2,7 +2,7 @@
 
 namespace Nails\Cdn\Driver;
 
-use Nails\Cdn\Exception\CdnDriverException;
+use Nails\Cdn\Exception\DriverException;
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
 
@@ -27,15 +27,15 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
          */
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID')) {
-            throw new CdnDriverException('Constant "DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID" is not defined', 1);
+            throw new DriverException('Constant "DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID" is not defined', 1);
         }
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET')) {
-            throw new CdnDriverException('Constant "DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET" is not defined', 2);
+            throw new DriverException('Constant "DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET" is not defined', 2);
         }
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_S3_BUCKET')) {
-            throw new CdnDriverException('Constant "DEPLOY_CDN_DRIVER_AWS_S3_BUCKET" is not defined', 3);
+            throw new DriverException('Constant "DEPLOY_CDN_DRIVER_AWS_S3_BUCKET" is not defined', 3);
         }
 
         // --------------------------------------------------------------------------
@@ -58,7 +58,8 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
      * Adds an error to the stack
      * @param string $sError The error string
      */
-    protected function setError($sError) {
+    protected function setError($sError)
+    {
         if (!empty($sError)) {
             $this->aErrors[] = $sError;
         }
