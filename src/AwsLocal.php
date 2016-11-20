@@ -337,6 +337,19 @@ class Awslocal implements \Nails\Cdn\Interfaces\Driver
     // --------------------------------------------------------------------------
 
     /**
+     * Generate the correct URL for serving a file direct from the file system
+     * @param  string  $sObject        The object to serve
+     * @param  string  $sBucket        The bucket to serve from
+     * @return string
+     */
+    public function urlServeRaw($sObject, $sBucket)
+    {
+        return $this->urlServe($sObject, $sBucket);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Returns the scheme of 'serve' URLs
      * @param  boolean $bForceDownload Whetehr or not to force download
      * @return string
