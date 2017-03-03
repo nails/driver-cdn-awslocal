@@ -36,10 +36,69 @@
         {
             "name": "AWS / Local",
             "type": "driver",
+            "subType": "storage",
             "forModule": "nailsapp/module-cdn",
             "data": {
                 "namespace": "Nails\\Cdn\\Driver\\",
-                "class": "AwsLocal"
+                "class": "AwsLocal",
+                "settings": [
+                        {
+                            "legend": "Credentials",
+                            "fields": [
+                                {
+                                    "key": "access_key",
+                                    "label": "Access Key",
+                                    "encrypted": true
+                                },
+                                {
+                                    "key": "access_secret",
+                                    "label": "Access Secret",
+                                    "type": "password",
+                                    "encrypted": true
+                                }
+                            ]
+                        },
+                        {
+                            "legend": "Buckets",
+                            "fields": [
+                                {
+                                    "key": "buckets",
+                                    "label": "Buckets",
+                                    "type": "textarea",
+                                    "info": "Buckets should be specified as a JSON object with the environment as the key, and the bucket as the value. e.g. <code>{\"PRODUCTION\":\"my-bucket\"}</code>"
+                                }
+                            ]
+                        },
+                        {
+                            "legend": "URLs",
+                            "fields": [
+                                {
+                                    "key": "uri_serve",
+                                    "label": "Serving URI",
+                                    "default": "http://{{bucket}}.s3.amazonaws.com",
+                                    "info": "Value will be passed into <code>site_url()</code>"
+                                },
+                                {
+                                    "key": "uri_serve_secure",
+                                    "label": "Serving URI (Secure)",
+                                    "default": "https://{{bucket}}.s3.amazonaws.com",
+                                    "info": "Value will be passed into <code>site_url()</code>"
+                                },
+                                {
+                                    "key": "uri_process",
+                                    "label": "Processing URI",
+                                    "default": "cdn",
+                                    "info": "Value will be passed into <code>site_url($value)</code>"
+                                },
+                                {
+                                    "key": "uri_process_secure",
+                                    "label": "Processing URI (Secure)",
+                                    "default": "cdn",
+                                    "info": "Value will be passed into <code>site_url($value, true)</code>"
+                                }
+                            ]
+                        }
+                    ]
             }
         }
     }

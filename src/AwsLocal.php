@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Driver;
 
+use Aws\Common\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Nails\Cdn\Exception\DriverException;
@@ -21,81 +22,67 @@ class AwsLocal extends Local
      */
     protected $sS3Bucket;
 
-    /**
-     * The endpoint for serving items from storage
-     * @var string
-     */
-    protected $sUriServe;
+    // --------------------------------------------------------------------------
 
     /**
-     * The endpoint for securely serving items from storage
-     * @var string
+     * Returns an instance of the AWS S3 SDK
+     * @return S3Client
+     * @throws DriverException
      */
-    protected $sUriServeSecure;
+    protected function sdk()
+    {
+        if (empty($this->oSdk)) {
 
-    /**
-     * The endpoint for serving items which are to be processed
-     * @var string
-     */
-    protected $sUriProcess;
+            $oCredentials = new Credentials(
+                $this->getSetting('access_key'),
+                $this->getSetting('access_secret')
+            );
+            
+            $this->oSdk = S3Client::factory([
+                'credentials' => $oCredentials,
+            ]);
 
-    /**
-     * The endpoint for securely serving items which are to be processed
-     * @var string
-     */
-    protected $sUriProcessSecure;
+            $this->sS3Bucket = $this->getBucket();
+        }
+
+        return $this->oSdk;
+    }
 
     // --------------------------------------------------------------------------
 
     /**
-     * AwsLocal constructor.
+     * Returns the Google Storage bucket for this environment
+     * @return string
      * @throws DriverException
      */
-    public function __construct()
+    protected function getBucket()
     {
-        $aConstants = [
-            'APP_CDN_DRIVER_AWS_ACCESS_ID',
-            'APP_CDN_DRIVER_AWS_ACCESS_SECRET',
-            'APP_CDN_DRIVER_AWS_S3_BUCKET_' . Environment::get(),
-        ];
-        foreach ($aConstants as $sConstant) {
-            if (!defined($sConstant)) {
-                throw new DriverException(
-                    'Constant "' . $sConstant . '" is not defined'
-                );
+        if (empty($this->sS3Bucket)) {
+            $aBuckets = json_decode($this->getSetting('buckets'), true);
+            if (empty($aBuckets)) {
+                throw new DriverException('S3 Buckets have not been defined.');
+            } elseif (empty($aBuckets[Environment::get()])) {
+                throw new DriverException('No bucket defined for the ' . Environment::get() . ' environment.');
+            } else {
+                $this->sS3Bucket = $aBuckets[Environment::get()];
             }
         }
 
-        // --------------------------------------------------------------------------
+        return $this->sS3Bucket;
+    }
 
-        //  Instantiate the SDK
-        $this->oSdk = S3Client::factory([
-            'key'    => constant('APP_CDN_DRIVER_AWS_ACCESS_ID'),
-            'secret' => constant('APP_CDN_DRIVER_AWS_ACCESS_SECRET'),
-        ]);
+    // --------------------------------------------------------------------------
 
-        //  Set the bucket we're using
-        $this->sS3Bucket = constant('APP_CDN_DRIVER_AWS_S3_BUCKET_' . Environment::get());
-
-        // --------------------------------------------------------------------------
-
-        //  Set default values
-        $aProperties = [
-            ['sUriServe', 'APP_CDN_DRIVER_AWS_URI_SERVE', 'http://{{bucket}}.s3.amazonaws.com'],
-            ['sUriServeSecure', 'APP_CDN_DRIVER_AWS_URI_SERVE_SECURE', 'https://{{bucket}}.s3.amazonaws.com'],
-            ['sUriProcess', 'APP_CDN_DRIVER_AWS_URI_PROCESS', site_url('cdn')],
-            ['sUriProcessSecure', 'APP_CDN_DRIVER_AWS_URI_PROCESS_SECURE', site_url('cdn', true)],
-        ];
-        foreach ($aProperties as $aProperty) {
-            list($sProp, $sConst, $sDefault) = $aProperty;
-            if (is_null($this->{$sProp})) {
-                if (defined($sConst)) {
-                    $this->{$sProp} = str_replace('{{bucket}}', $this->sS3Bucket, addTrailingSlash(constant($sConst)));
-                } else {
-                    $this->{$sProp} = str_replace('{{bucket}}', $this->sS3Bucket, addTrailingSlash($sDefault));
-                }
-            }
-        }
+    /**
+     * Returns the requested URI and replaces {{bucket}} with the S3 bucket being used
+     *
+     * @param $sUriType
+     *
+     * @return string
+     */
+    protected function getUri($sUriType)
+    {
+        return str_replace('{{bucket}}', $this->getBucket(), $this->getSetting('uri_' . $sUriType));
     }
 
     // --------------------------------------------------------------------------
@@ -126,7 +113,7 @@ class AwsLocal extends Local
         try {
 
             //  Create "normal" version
-            $this->oSdk->putObject([
+            $this->sdk()->putObject([
                 'Bucket'      => $this->sS3Bucket,
                 'Key'         => $sBucket . '/' . $sFilename . $sExtension,
                 'SourceFile'  => $sSource,
@@ -135,7 +122,7 @@ class AwsLocal extends Local
             ]);
 
             //  Create "download" version
-            $this->oSdk->copyObject([
+            $this->sdk()->copyObject([
                 'Bucket'             => $this->sS3Bucket,
                 'CopySource'         => $this->sS3Bucket . '/' . $sBucket . '/' . $sFilename . $sExtension,
                 'Key'                => $sBucket . '/' . $sFilename . '-download' . $sExtension,
@@ -165,7 +152,7 @@ class AwsLocal extends Local
      */
     public function objectExists($sFilename, $sBucket)
     {
-        return $this->oSdk->doesObjectExist($sBucket, $sFilename);
+        return $this->sdk()->doesObjectExist($sBucket, $sFilename);
     }
 
     // --------------------------------------------------------------------------
@@ -192,7 +179,7 @@ class AwsLocal extends Local
                 ],
             ];
 
-            $this->oSdk->deleteObjects($aOptions);
+            $this->sdk()->deleteObjects($aOptions);
             return true;
 
         } catch (\Exception $e) {
@@ -229,7 +216,7 @@ class AwsLocal extends Local
             //  Doesn't exist, attempt to fetch from S3
             try {
 
-                $this->oSdk->getObject([
+                $this->sdk()->getObject([
                     'Bucket' => $this->sS3Bucket,
                     'Key'    => $sBucket . '/' . $sFilename . $sExtension,
                     'SaveAs' => $sSrcFile,
@@ -267,11 +254,11 @@ class AwsLocal extends Local
     public function bucketCreate($sBucket)
     {
         //  Attempt to create a 'folder' object on S3
-        if (!$this->oSdk->doesObjectExist($this->sS3Bucket, $sBucket . '/')) {
+        if (!$this->sdk()->doesObjectExist($this->sS3Bucket, $sBucket . '/')) {
 
             try {
 
-                $this->oSdk->putObject([
+                $this->sdk()->putObject([
                     'Bucket' => $this->sS3Bucket,
                     'Key'    => $sBucket . '/',
                     'Body'   => '',
@@ -306,7 +293,7 @@ class AwsLocal extends Local
         dumpanddie('@todo');
         try {
 
-            $this->oSdk->deleteMatchingObjects($this->sS3Bucket, $sBucket . '/');
+            $this->sdk()->deleteMatchingObjects($this->sS3Bucket, $sBucket . '/');
             return true;
 
         } catch (\Exception $e) {
@@ -345,7 +332,7 @@ class AwsLocal extends Local
      */
     public function urlServeScheme($bForceDownload = false)
     {
-        $sUrl = addTrailingSlash($this->sUriServe . '{{bucket}}');
+        $sUrl = addTrailingSlash($this->getUri('serve')) . '{{bucket}}/';
 
         /**
          * If we're forcing the download we need to reference a slightly different file.
