@@ -1,8 +1,8 @@
 {
     "name": "nailsapp/driver-cdn-awslocal",
     "keywords": ["Nails", "Shed Collective", "CodeIgniter", "CDN Module", "Driver", "AWS"],
-    "homepage": "http://nailsapp.co.uk/modules/cdn/driver/awslocal",
-    "description": "This is the \"AWS/Local\" driver for the Nails CDN module.",
+    "homepage": "http://nailsapp.co.uk/modules/cdn/driver/aws",
+    "description": "This is the \"AWS\" driver for the Nails CDN module.",
     "license": "MIT",
     "authors":
     [
@@ -40,7 +40,7 @@
             "forModule": "nailsapp/module-cdn",
             "data": {
                 "namespace": "Nails\\Cdn\\Driver\\",
-                "class": "AwsLocal",
+                "class": "Aws",
                 "settings": [
                         {
                             "legend": "Credentials",

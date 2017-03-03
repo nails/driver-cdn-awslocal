@@ -8,7 +8,7 @@ use Aws\S3\S3Client;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Environment;
 
-class AwsLocal extends Local
+class Aws extends Local
 {
     /**
      * The S3 SDK
@@ -37,7 +37,7 @@ class AwsLocal extends Local
                 $this->getSetting('access_key'),
                 $this->getSetting('access_secret')
             );
-            
+
             $this->oSdk = S3Client::factory([
                 'credentials' => $oCredentials,
             ]);

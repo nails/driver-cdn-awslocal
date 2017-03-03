@@ -4,7 +4,7 @@ namespace Nails\Cdn\Driver;
 
 use Nails\Factory;
 
-class AwsLocalTest extends \PHPUnit_Framework_TestCase
+class AwsTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * Whether the setup has been run once already
