@@ -34,7 +34,7 @@
     {
         "nails" :
         {
-            "name": "AWS / Local",
+            "name": "AWS",
             "type": "driver",
             "subType": "storage",
             "forModule": "nailsapp/module-cdn",
