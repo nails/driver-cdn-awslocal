@@ -13,8 +13,8 @@ class AwsTest extends \PHPUnit_Framework_TestCase
     private $bIsInitiated;
 
     /**
-     * The CDN Library
-     * @var \Nails\Cdn\Library\Cdn;
+     * The CDN Service
+     * @var \Nails\Cdn\Service\Cdn;
      */
     private $oCdn;
 
