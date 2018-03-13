@@ -203,7 +203,7 @@ class Aws extends Local
         //  Do we have the original sourcefile?
         $sExtension = strtolower(substr($sFilename, strrpos($sFilename, '.')));
         $sFilename  = strtolower(substr($sFilename, 0, strrpos($sFilename, '.')));
-        $sSrcFile   = DEPLOY_CACHE_DIR . $sBucket . '-' . $sFilename . '-SRC' . $sExtension;
+        $sSrcFile   = CACHE_PATH . $sBucket . '-' . $sFilename . '-SRC' . $sExtension;
 
         //  Check filesystem for source file
         if (file_exists($sSrcFile)) {
