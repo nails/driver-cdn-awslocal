@@ -114,7 +114,7 @@ class Aws extends Local
 
             //  Create "normal" version
             $this->sdk()->putObject([
-                'Bucket'      => $this->sS3Bucket,
+                'Bucket'      => $this->getBucket(),
                 'Key'         => $sBucket . '/' . $sFilename . $sExtension,
                 'SourceFile'  => $sSource,
                 'ContentType' => $sMime,
@@ -123,8 +123,8 @@ class Aws extends Local
 
             //  Create "download" version
             $this->sdk()->copyObject([
-                'Bucket'             => $this->sS3Bucket,
-                'CopySource'         => $this->sS3Bucket . '/' . $sBucket . '/' . $sFilename . $sExtension,
+                'Bucket'             => $this->getBucket(),
+                'CopySource'         => $this->getBucket() . '/' . $sBucket . '/' . $sFilename . $sExtension,
                 'Key'                => $sBucket . '/' . $sFilename . '-download' . $sExtension,
                 'ContentType'        => 'application/octet-stream',
                 'ContentDisposition' => 'attachment; filename="' . str_replace('"', '', $sName) . '" ',
@@ -172,7 +172,7 @@ class Aws extends Local
             $sFilename  = strtolower(substr($sObject, 0, strrpos($sObject, '.')));
             $sExtension = strtolower(substr($sObject, strrpos($sObject, '.')));
             $aOptions   = [
-                'Bucket'  => $this->sS3Bucket,
+                'Bucket'  => $this->getBucket(),
                 'Objects' => [
                     ['Key' => $sBucket . '/' . $sFilename . $sExtension],
                     ['Key' => $sBucket . '/' . $sFilename . '-download' . $sExtension],
@@ -217,7 +217,7 @@ class Aws extends Local
             try {
 
                 $this->sdk()->getObject([
-                    'Bucket' => $this->sS3Bucket,
+                    'Bucket' => $this->getBucket(),
                     'Key'    => $sBucket . '/' . $sFilename . $sExtension,
                     'SaveAs' => $sSrcFile,
                 ]);
@@ -254,12 +254,12 @@ class Aws extends Local
     public function bucketCreate($sBucket)
     {
         //  Attempt to create a 'folder' object on S3
-        if (!$this->sdk()->doesObjectExist($this->sS3Bucket, $sBucket . '/')) {
+        if (!$this->sdk()->doesObjectExist($this->getBucket(), $sBucket . '/')) {
 
             try {
 
                 $this->sdk()->putObject([
-                    'Bucket' => $this->sS3Bucket,
+                    'Bucket' => $this->getBucket(),
                     'Key'    => $sBucket . '/',
                     'Body'   => '',
                 ]);
@@ -293,7 +293,7 @@ class Aws extends Local
         dumpanddie('@todo');
         try {
 
-            $this->sdk()->deleteMatchingObjects($this->sS3Bucket, $sBucket . '/');
+            $this->sdk()->deleteMatchingObjects($this->getBucket(), $sBucket . '/');
             return true;
 
         } catch (\Exception $e) {
