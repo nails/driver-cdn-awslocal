@@ -395,7 +395,7 @@ class Aws extends Local
             $sUrl .= '{{filename}}{{extension}}';
         }
 
-        return $this->urlMakeSecure($sUrl);
+        return $this->urlMakeSecure($sUrl, false);
     }
 
     // --------------------------------------------------------------------------
