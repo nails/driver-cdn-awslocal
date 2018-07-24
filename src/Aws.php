@@ -12,37 +12,43 @@ class Aws extends Local
 {
     /**
      * The S3 SDK
+     *
      * @var S3Client
      */
     protected $oSdk;
 
     /**
      * The S3 bucket where items will be stored (not to be confused with internal buckets)
+     *
      * @var string
      */
     protected $sS3Bucket;
+
+    /**
+     * The S3 region where the bucket is located
+     *
+     * @var string
+     */
+    protected $sS3Region;
 
     // --------------------------------------------------------------------------
 
     /**
      * Returns an instance of the AWS S3 SDK
+     *
      * @return S3Client
-     * @throws DriverException
      */
     protected function sdk()
     {
         if (empty($this->oSdk)) {
-
-            $oCredentials = new Credentials(
-                $this->getSetting('access_key'),
-                $this->getSetting('access_secret')
-            );
-
-            $this->oSdk = S3Client::factory([
-                'credentials' => $oCredentials,
+            $this->oSdk = new \Aws\S3\S3Client([
+                'version'     => 'latest',
+                'region'      => $this->getRegion(),
+                'credentials' => new \Aws\Credentials\Credentials(
+                    $this->getSetting('access_key'),
+                    $this->getSetting('access_secret')
+                ),
             ]);
-
-            $this->sS3Bucket = $this->getBucket();
         }
 
         return $this->oSdk;
@@ -51,24 +57,68 @@ class Aws extends Local
     // --------------------------------------------------------------------------
 
     /**
-     * Returns the Google Storage bucket for this environment
+     * Returns the AWS bucket for this environment
+     *
      * @return string
+     *
      * @throws DriverException
      */
     protected function getBucket()
     {
         if (empty($this->sS3Bucket)) {
-            $aBuckets = json_decode($this->getSetting('buckets'), true);
-            if (empty($aBuckets)) {
-                throw new DriverException('S3 Buckets have not been defined.');
-            } elseif (empty($aBuckets[Environment::get()])) {
-                throw new DriverException('No bucket defined for the ' . Environment::get() . ' environment.');
-            } else {
-                $this->sS3Bucket = $aBuckets[Environment::get()];
+            $this->sS3Bucket = $this->getRegionAndBucket()->bucket;
+            if (empty($this->sS3Bucket)) {
+                throw new DriverException('S3 Bucket has not been defined.');
             }
         }
 
         return $this->sS3Bucket;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the AWS region for this environment
+     *
+     * @return string
+     *
+     * @throws DriverException
+     */
+    protected function getRegion()
+    {
+        if (empty($this->sS3Region)) {
+            $this->sS3Region = $this->getRegionAndBucket()->region;
+            if (empty($this->sS3Region)) {
+                throw new DriverException('S3 Region has not been defined.');
+            }
+        }
+
+        return $this->sS3Region;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Extracts the Region and Bucket from the configs
+     *
+     * @return \stdClass
+     *
+     * @throws DriverException
+     */
+    protected function getRegionAndBucket()
+    {
+        $aSpaces = json_decode($this->getSetting('buckets'), true);
+        if (empty($aSpaces)) {
+            throw new DriverException('S3 Buckets have not been defined.');
+        } elseif (empty($aSpaces[Environment::get()])) {
+            throw new DriverException('No bucket defined for the ' . Environment::get() . ' environment.');
+        } else {
+            $sRegionSpace = explode(':', $aSpaces[Environment::get()]);
+            return (object) [
+                'region' => getFromArray(0, $sRegionSpace, ''),
+                'bucket' => getFromArray(1, $sRegionSpace, ''),
+            ];
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -171,15 +221,15 @@ class Aws extends Local
 
             $sFilename  = strtolower(substr($sObject, 0, strrpos($sObject, '.')));
             $sExtension = strtolower(substr($sObject, strrpos($sObject, '.')));
-            $aOptions   = [
-                'Bucket'  => $this->getBucket(),
-                'Objects' => [
-                    ['Key' => $sBucket . '/' . $sFilename . $sExtension],
-                    ['Key' => $sBucket . '/' . $sFilename . '-download' . $sExtension],
+            $this->sdk()->deleteObjects([
+                'Bucket' => $this->getBucket(),
+                'Delete' => [
+                    'Objects' => [
+                        ['Key' => $sBucket . '/' . $sFilename . $sExtension],
+                        ['Key' => $sBucket . '/' . $sFilename . '-download' . $sExtension],
+                    ],
                 ],
-            ];
-
-            $this->sdk()->deleteObjects($aOptions);
+            ]);
             return true;
 
         } catch (\Exception $e) {
@@ -289,8 +339,7 @@ class Aws extends Local
      */
     public function bucketDestroy($sBucket)
     {
-        //  @todo - consider the implications of bucket deletion; maybe prevent deletion of non-empty buckets
-        dumpanddie('@todo');
+        //  @todo (Pablo - 2018-07-24) - consider the implications of bucket deletion; maybe prevent deletion of non-empty buckets
         try {
 
             $this->sdk()->deleteMatchingObjects($this->getBucket(), $sBucket . '/');
@@ -363,7 +412,7 @@ class Aws extends Local
      */
     public function urlExpiring($sObject, $sBucket, $iExpires, $bForceDownload = false)
     {
-        //  @todo - consider generating a CloudFront expiring/signed URL instead.
+        //  @todo (Pablo - 2018-07-24) - consider generating a CloudFront expiring/signed URL instead.
         return parent::urlExpiring($sObject, $sBucket, $iExpires, $bForceDownload);
     }
 }

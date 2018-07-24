@@ -20,7 +20,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "aws/aws-sdk-php": "~2.4.5"
+        "aws/aws-sdk-php": "3.*"
     },
     "require-dev":
     {
@@ -65,7 +65,7 @@
                                     "key": "buckets",
                                     "label": "Buckets",
                                     "type": "textarea",
-                                    "info": "Buckets should be specified as a JSON object with the environment as the key, and the bucket as the value. e.g. <code>{\"PRODUCTION\":\"my-bucket\"}</code>"
+                                    "info": "Buckets should be specified as a JSON object with the environment as the key, and the region and bucket as the value. e.g. <code>{\"PRODUCTION\":\"eu-west-1:my-bucket\"}</code>"
                                 }
                             ]
                         },
