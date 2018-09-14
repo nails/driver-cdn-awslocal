@@ -7,7 +7,7 @@ http://nailsapp.co.uk/modules/cdn/driver/aws
 
 ## Installing
 
-    composer require nailsapp/driver-cdn-awslocal
+    composer require nails/driver-cdn-awslocal
     
     
 ## Configure

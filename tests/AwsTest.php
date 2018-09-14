@@ -24,7 +24,7 @@ class AwsTest extends \PHPUnit_Framework_TestCase
     {
         if (empty($this->bIsInitiated)) {
             Factory::setup();
-            $this->oCdn = Factory::services('Cdn', 'nailsapp/module-cdn');
+            $this->oCdn = Factory::services('Cdn', 'nails/module-cdn');
         }
     }
 
