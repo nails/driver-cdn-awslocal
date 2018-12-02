@@ -15,7 +15,7 @@ http://nailsapp.co.uk/modules/cdn/driver/aws
     composer require nails/driver-cdn-awslocal
 
 
-## Configure
+## Configure
 
 The driver can be enabled and configured via the admin interface.
 
