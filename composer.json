@@ -20,7 +20,8 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "aws/aws-sdk-php": "3.*"
+        "aws/aws-sdk-php": "3.*",
+        "nails/module-cdn": "dev-develop"
     },
     "require-dev":
     {
