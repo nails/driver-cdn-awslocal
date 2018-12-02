@@ -1,5 +1,10 @@
 # AWS Driver for Nails CDN Module
 
+![license](https://img.shields.io/badge/license-MIT-green.svg)
+[![CircleCI branch](https://img.shields.io/circleci/project/github/nails/driver-cdn-awslocal.svg)](https://circleci.com/gh/nails/driver-cdn-awslocal)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/nails/driver-cdn-awslocal/badges/quality-score.png)](https://scrutinizer-ci.com/g/nails/driver-cdn-awslocal)
+[![Join the chat on Slack!](https://now-examples-slackin-rayibnpwqe.now.sh/badge.svg)](https://nails-app.slack.com/shared_invite/MTg1NDcyNjI0ODcxLTE0OTUwMzA1NTYtYTZhZjc5YjExMQ)
+
 This is the AWS driver for the Nails CDN module, it allows the CDN to use AWS S3 to store content.
 
 http://nailsapp.co.uk/modules/cdn/driver/aws
@@ -8,8 +13,8 @@ http://nailsapp.co.uk/modules/cdn/driver/aws
 ## Installing
 
     composer require nails/driver-cdn-awslocal
-    
-    
+
+
 ## Configure
 
 The driver can be enabled and configured via the admin interface.
