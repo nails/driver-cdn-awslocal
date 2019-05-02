@@ -7,8 +7,6 @@
 
 This is the AWS driver for the Nails CDN module, it allows the CDN to use AWS S3 to store content.
 
-http://nailsapp.co.uk/modules/cdn/driver/aws
-
 
 ## Installing
 
