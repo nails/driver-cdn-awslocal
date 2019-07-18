@@ -144,7 +144,7 @@ class Aws extends Local
     /**
      * Creates a new object
      *
-     * @param  \stdClass $oData Data to create the object with
+     * @param \stdClass $oData Data to create the object with
      *
      * @return boolean
      */
@@ -171,6 +171,13 @@ class Aws extends Local
                 'ACL'         => 'public-read',
             ]);
 
+        } catch (\Exception $e) {
+            $this->setError('AWS-SDK EXCEPTION: [objectCreate:put]: ' . $e->getMessage());
+            return false;
+        }
+
+        try {
+
             //  Create "download" version
             $this->sdk()->copyObject([
                 'Bucket'             => $this->getBucket(),
@@ -185,7 +192,7 @@ class Aws extends Local
             return true;
 
         } catch (\Exception $e) {
-            $this->setError('AWS-SDK EXCEPTION: [objectCreate]: ' . $e->getMessage());
+            $this->setError('AWS-SDK EXCEPTION: [objectCreate:copy]: ' . $e->getMessage());
             return false;
         }
     }
@@ -195,8 +202,8 @@ class Aws extends Local
     /**
      * Determines whether an object exists or not
      *
-     * @param  string $sFilename The object's filename
-     * @param  string $sBucket   The bucket's slug
+     * @param string $sFilename The object's filename
+     * @param string $sBucket   The bucket's slug
      *
      * @return boolean
      */
@@ -210,8 +217,8 @@ class Aws extends Local
     /**
      * Destroys (permanently deletes) an object
      *
-     * @param  string $sObject The object's filename
-     * @param  string $sBucket The bucket's slug
+     * @param string $sObject The object's filename
+     * @param string $sBucket The bucket's slug
      *
      * @return boolean
      */
@@ -243,8 +250,8 @@ class Aws extends Local
     /**
      * Returns a local path for an object
      *
-     * @param  string $sBucket   The bucket's slug
-     * @param  string $sFilename The filename
+     * @param string $sBucket   The bucket's slug
+     * @param string $sFilename The filename
      *
      * @return mixed             String on success, false on failure
      */
@@ -297,7 +304,7 @@ class Aws extends Local
     /**
      * Creates a new bucket
      *
-     * @param  string $sBucket The bucket's slug
+     * @param string $sBucket The bucket's slug
      *
      * @return boolean
      */
@@ -333,7 +340,7 @@ class Aws extends Local
     /**
      * Deletes an existing bucket
      *
-     * @param  string $sBucket The bucket's slug
+     * @param string $sBucket The bucket's slug
      *
      * @return boolean
      */
@@ -360,8 +367,8 @@ class Aws extends Local
     /**
      * Generate the correct URL for serving a file direct from the file system
      *
-     * @param  string $sObject The object to serve
-     * @param  string $sBucket The bucket to serve from
+     * @param string $sObject The object to serve
+     * @param string $sBucket The bucket to serve from
      *
      * @return string
      */
@@ -375,7 +382,7 @@ class Aws extends Local
     /**
      * Returns the scheme of 'serve' URLs
      *
-     * @param  boolean $bForceDownload Whether or not to force download
+     * @param boolean $bForceDownload Whether or not to force download
      *
      * @return string
      */
@@ -403,10 +410,10 @@ class Aws extends Local
     /**
      * Generates a properly hashed expiring url
      *
-     * @param  string  $sBucket        The bucket which the image resides in
-     * @param  string  $sObject        The object to be served
-     * @param  integer $iExpires       The length of time the URL should be valid for, in seconds
-     * @param  boolean $bForceDownload Whether to force a download
+     * @param string  $sBucket        The bucket which the image resides in
+     * @param string  $sObject        The object to be served
+     * @param integer $iExpires       The length of time the URL should be valid for, in seconds
+     * @param boolean $bForceDownload Whether to force a download
      *
      * @return string
      */
