@@ -6,7 +6,9 @@ use Aws\Common\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Nails\Cdn\Exception\DriverException;
+use Nails\Common\Service\FileCache;
 use Nails\Environment;
+use Nails\Factory;
 
 class Aws extends Local
 {
@@ -257,10 +259,13 @@ class Aws extends Local
      */
     public function objectLocalPath($sBucket, $sFilename)
     {
+        /** @var FileCache $oFileCache */
+        $oFileCache = Factory::service('FileCache');
+
         //  Do we have the original sourcefile?
         $sExtension = strtolower(substr($sFilename, strrpos($sFilename, '.')));
         $sFilename  = strtolower(substr($sFilename, 0, strrpos($sFilename, '.')));
-        $sSrcFile   = CACHE_PATH . $sBucket . '-' . $sFilename . '-SRC' . $sExtension;
+        $sSrcFile   = $oFileCache->getDir() . $sBucket . '-' . $sFilename . '-SRC' . $sExtension;
 
         //  Check filesystem for source file
         if (file_exists($sSrcFile)) {
