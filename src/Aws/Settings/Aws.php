@@ -1,6 +1,6 @@
 <?php
 
-namespace Nails\Cdn\Driver\Settings;
+namespace Nails\Cdn\Driver\Aws\Settings;
 
 use Nails\Common\Helper\Form;
 use Nails\Common\Interfaces;
@@ -11,7 +11,7 @@ use Nails\Factory;
 /**
  * Class Aws
  *
- * @package Nails\Cdn\Driver\Settings
+ * @package Nails\Cdn\Driver\Aws\Settings
  */
 class Aws implements Interfaces\Component\Settings
 {
