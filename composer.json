@@ -1,11 +1,17 @@
 {
     "name": "nails/driver-cdn-awslocal",
-    "keywords": ["Nails", "Shed Collective", "CodeIgniter", "CDN Module", "Driver", "AWS"],
+    "keywords": [
+        "Nails",
+        "Shed Collective",
+        "CodeIgniter",
+        "CDN Module",
+        "Driver",
+        "AWS"
+    ],
     "homepage": "http://nailsapp.co.uk/modules/cdn/driver/aws",
     "description": "This is the \"AWS\" driver for the Nails CDN module.",
     "license": "MIT",
-    "authors":
-    [
+    "authors": [
         {
             "name": "Pablo de la Pena",
             "email": "p@nailsapp.co.uk",
@@ -13,8 +19,7 @@
             "role": "Developer"
         }
     ],
-    "support":
-    {
+    "support": {
         "email": "hello@nailsapp.co.uk"
     },
     "minimum-stability": "dev",
@@ -23,83 +28,24 @@
         "aws/aws-sdk-php": "3.*",
         "nails/module-cdn": "dev-develop"
     },
-    "require-dev":
-    {
+    "require-dev": {
         "phpunit/phpunit": "9.*"
     },
-    "autoload":
-    {
-        "psr-4": {"Nails\\Cdn\\Driver\\": "src/"}
+    "autoload": {
+        "psr-4": {
+            "Nails\\Cdn\\Driver\\": "src/"
+        }
     },
-    "extra":
-    {
-        "nails" :
-        {
+    "extra": {
+        "nails": {
             "name": "AWS",
             "type": "driver",
             "subType": "storage",
             "forModule": "nails/module-cdn",
+            "namespace": "Nails\\Cdn\\Driver\\",
             "data": {
                 "namespace": "Nails\\Cdn\\Driver\\",
-                "class": "Aws",
-                "settings": [
-                        {
-                            "legend": "Credentials",
-                            "fields": [
-                                {
-                                    "key": "access_key",
-                                    "label": "Access Key",
-                                    "encrypted": true
-                                },
-                                {
-                                    "key": "access_secret",
-                                    "label": "Access Secret",
-                                    "type": "password",
-                                    "encrypted": true
-                                }
-                            ]
-                        },
-                        {
-                            "legend": "Buckets",
-                            "fields": [
-                                {
-                                    "key": "buckets",
-                                    "label": "Buckets",
-                                    "type": "textarea",
-                                    "info": "Buckets should be specified as a JSON object with the environment as the key, and the region and bucket as the value. e.g. <code>{\"PRODUCTION\":\"eu-west-1:my-bucket\"}</code>"
-                                }
-                            ]
-                        },
-                        {
-                            "legend": "URLs",
-                            "fields": [
-                                {
-                                    "key": "uri_serve",
-                                    "label": "Serving URI",
-                                    "default": "http://{{bucket}}.s3.amazonaws.com",
-                                    "info": "Value will be passed into <code>siteUrl()</code>"
-                                },
-                                {
-                                    "key": "uri_serve_secure",
-                                    "label": "Serving URI (Secure)",
-                                    "default": "https://{{bucket}}.s3.amazonaws.com",
-                                    "info": "Value will be passed into <code>siteUrl()</code>"
-                                },
-                                {
-                                    "key": "uri_process",
-                                    "label": "Processing URI",
-                                    "default": "cdn",
-                                    "info": "Value will be passed into <code>siteUrl()</code>"
-                                },
-                                {
-                                    "key": "uri_process_secure",
-                                    "label": "Processing URI (Secure)",
-                                    "default": "cdn",
-                                    "info": "Value will be passed into <code>siteUrl()</code>"
-                                }
-                            ]
-                        }
-                    ]
+                "class": "Aws"
             }
         }
     }
