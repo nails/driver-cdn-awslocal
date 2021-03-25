@@ -55,6 +55,7 @@ class Aws implements Interfaces\Component\Settings
         $oAccessSecret = Factory::factory('ComponentSetting');
         $oAccessSecret
             ->setKey(static::KEY_ACCESS_SECRET)
+            ->setType(Form::FIELD_PASSWORD)
             ->setLabel('Access Secret')
             ->setEncrypted(true)
             ->setFieldset('Credentials')
