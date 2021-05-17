@@ -6,6 +6,7 @@ use Aws\Common\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Nails\Cdn\Exception\DriverException;
+use Nails\Common\Helper;
 use Nails\Common\Service\FileCache;
 use Nails\Environment;
 use Nails\Factory;
@@ -117,8 +118,8 @@ class Aws extends Local
         } else {
             $sRegionSpace = explode(':', $aSpaces[Environment::get()]);
             return (object) [
-                'region' => getFromArray(0, $sRegionSpace, ''),
-                'bucket' => getFromArray(1, $sRegionSpace, ''),
+                'region' => Helper\ArrayHelper::get(0, $sRegionSpace, ''),
+                'bucket' => Helper\ArrayHelper::get(1, $sRegionSpace, ''),
             ];
         }
     }
@@ -128,11 +129,11 @@ class Aws extends Local
     /**
      * Returns the requested URI and replaces {{bucket}} with the S3 bucket being used
      *
-     * @param $sUriType
+     * @param string $sUriType
      *
      * @return string
      */
-    protected function getUri($sUriType)
+    protected function getUri(string $sUriType): string
     {
         return str_replace('{{bucket}}', $this->getBucket(), $this->getSetting('uri_' . $sUriType));
     }
@@ -393,7 +394,7 @@ class Aws extends Local
      */
     public function urlServeScheme($bForceDownload = false)
     {
-        $sUrl = addTrailingSlash($this->getUri('serve')) . '{{bucket}}/';
+        $sUrl = Helper\Strings::addTrailingSlash($this->getUri('serve')) . '{{bucket}}/';
 
         /**
          * If we're forcing the download we need to reference a slightly different file.
