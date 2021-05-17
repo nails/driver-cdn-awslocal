@@ -26,7 +26,8 @@
     "prefer-stable": true,
     "require": {
         "aws/aws-sdk-php": "3.*",
-        "nails/module-cdn": "dev-develop"
+        "nails/module-cdn": "dev-develop",
+        "nails/driver-cdn-local": "dev-develop"
     },
     "require-dev": {
         "phpunit/phpunit": "9.*",
