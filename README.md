@@ -1,7 +1,7 @@
 # AWS Driver for Nails CDN Module
 
 ![license](https://img.shields.io/badge/license-MIT-green.svg)
-[![CircleCI branch](https://img.shields.io/circleci/project/github/nails/driver-cdn-awslocal.svg)](https://circleci.com/gh/nails/driver-cdn-awslocal)
+[![tests](https://github.com/nails/driver-cdn-awslocal/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/nails/driver-cdn-awslocal/actions)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/nails/driver-cdn-awslocal/badges/quality-score.png)](https://scrutinizer-ci.com/g/nails/driver-cdn-awslocal)
 
 This is the AWS driver for the Nails CDN module, it allows the CDN to use AWS S3 to store content.
