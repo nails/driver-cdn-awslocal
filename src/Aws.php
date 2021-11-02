@@ -16,21 +16,21 @@ class Aws extends Local
     /**
      * The S3 SDK
      *
-     * @var S3Client
+     * @var S3Client|null
      */
     protected $oSdk;
 
     /**
      * The S3 bucket where items will be stored (not to be confused with internal buckets)
      *
-     * @var string
+     * @var string|null
      */
     protected $sS3Bucket;
 
     /**
      * The S3 region where the bucket is located
      *
-     * @var string
+     * @var string|null
      */
     protected $sS3Region;
 
