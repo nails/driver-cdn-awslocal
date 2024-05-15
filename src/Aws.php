@@ -171,7 +171,6 @@ class Aws extends Local
                 'Key'         => $sBucket . '/' . $sFilename . $sExtension,
                 'SourceFile'  => $sSource,
                 'ContentType' => $sMime,
-                'ACL'         => 'public-read',
             ]);
 
         } catch (\Exception $e) {
@@ -189,7 +188,6 @@ class Aws extends Local
                 'ContentType'        => 'application/octet-stream',
                 'ContentDisposition' => 'attachment; filename="' . str_replace('"', '', $sName) . '" ',
                 'MetadataDirective'  => 'REPLACE',
-                'ACL'                => 'public-read',
             ]);
 
             return true;
