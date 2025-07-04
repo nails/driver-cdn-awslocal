@@ -29,9 +29,11 @@
     "prefer-stable": true,
     "require":
     {
+        "php": ">=8",
         "aws/aws-sdk-php": "3.*",
         "nails/module-cdn": "dev-feature/pre-new-admin",
-        "nails/driver-cdn-local": "dev-feature/pre-new-admin"
+        "nails/driver-cdn-local": "dev-feature/pre-new-admin",
+        "ext-json": "*"
     },
     "require-dev":
     {
