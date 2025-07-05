@@ -225,14 +225,30 @@ class Aws extends Local
         string $sTargetObject,
         string $sTargetBucket
     ): bool {
-        try {
 
-            throw new \Exception('The AWS CDN driver does not support moving objects.');
+        $result = $this->objectCopy(
+            $sSourceObject,
+            $sSourceBucket,
+            $sTargetObject,
+            $sTargetBucket
+        );
 
-        } catch (\Exception $e) {
-            $this->setError('AWS-SDK EXCEPTION: [objectMove]: ' . $e->getMessage());
+        if (!$result) {
+            //  Errors will be set by objectCopy
             return false;
         }
+
+        $result = $this->objectDestroy(
+            $sSourceObject,
+            $sSourceBucket
+        );
+
+        if (!$result) {
+            //  Errors will be set by objectDestroy
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
@@ -251,21 +267,48 @@ class Aws extends Local
         string $sTargetObject,
         string $sTargetBucket
     ): bool {
+
+        $sSourceFilename  = strtolower(substr($sSourceObject, 0, strrpos($sSourceObject, '.')));
+        $sSourceExtension = strtolower(substr($sSourceObject, strrpos($sSourceObject, '.')));
+
+        $sTargetFilename  = strtolower(substr($sTargetObject, 0, strrpos($sTargetObject, '.')));
+        $sTargetExtension = strtolower(substr($sTargetObject, strrpos($sTargetObject, '.')));
+
         try {
 
             $this->sdk()->copyObject([
                 'Bucket'            => $this->getBucket(),
                 'CopySource'        => $this->getBucket() . '/' . $sSourceBucket . '/' . $sSourceObject,
                 'Key'               => $sTargetBucket . '/' . $sTargetObject,
-                'MetadataDirective' => 'REPLACE',
+                'MetadataDirective' => 'COPY',
             ]);
 
-            return true;
-
         } catch (\Exception $e) {
-            $this->setError('AWS-SDK EXCEPTION: [objectCopy]: ' . $e->getMessage());
+            $this->setError('AWS-SDK EXCEPTION: [objectCopy:normal]: ' . $e->getMessage());
             return false;
         }
+
+        try {
+
+            $this->sdk()->copyObject([
+                'Bucket'            => $this->getBucket(),
+                'CopySource'        => $this->getBucket() . '/' . $sSourceBucket . '/' . $sSourceFilename . '-download' . $sSourceExtension,
+                'Key'               => $sTargetBucket . '/' . $sTargetFilename . '-download' . $sTargetExtension,
+                'MetadataDirective' => 'COPY',
+            ]);
+
+        } catch (\Exception $e) {
+
+            $this->objectDestroy(
+                $sTargetObject,
+                $sTargetBucket
+            );
+
+            $this->setError('AWS-SDK EXCEPTION: [objectCopy:download]: ' . $e->getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     // --------------------------------------------------------------------------
