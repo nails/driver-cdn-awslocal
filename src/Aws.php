@@ -201,7 +201,10 @@ class Aws extends Local
     {
         try {
 
-            return $this->sdk()->doesObjectExist($sBucket, $sFilename);
+            return $this->sdk()->doesObjectExist(
+                $this->getBucket(),
+                $sBucket . '/' . $sFilename
+            );
 
         } catch (\Exception $e) {
             $this->setError('AWS-SDK EXCEPTION: [objectExists]: ' . $e->getMessage());
