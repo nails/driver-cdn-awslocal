@@ -403,6 +403,77 @@ class Aws extends Local
     // --------------------------------------------------------------------------
 
     /**
+     * Determines whether an object's meta data is set correctly or not
+     *
+     * @param string $sFilename        The object's filename
+     * @param string $sFilenameDisplay The object's human-friendly name
+     * @param string $sBucket          The bucket's slug
+     * @param string $sMimeType        The object's mime type
+     *
+     * @return string[]
+     */
+    public function getObjectMetaDataErrors(
+        string $sFilename,
+        string $sFilenameDisplay,
+        string $sBucket,
+        string $sMimeType
+    ): array {
+
+        $aErrors = [];
+
+        try {
+
+            $sExtension = strtolower(substr($sFilename, strrpos($sFilename, '.') + 1));
+            $sFilename  = strtolower(substr($sFilename, 0, strrpos($sFilename, '.')));
+
+            $oNormalObject = $this->sdk()->headObject([
+                'Bucket' => $this->getBucket(),
+                'Key'    => sprintf('%s/%s.%s', $sBucket, $sFilename, $sExtension),
+            ]);
+
+            $oExpected = json_encode([
+                'ContentType' => $sMimeType,
+            ]);
+
+            $oActual = json_encode([
+                'ContentType' => $oNormalObject->get('ContentType'),
+            ]);
+
+            if ($oExpected !== $oActual) {
+                $aErrors[] = sprintf('Incorrect content type for normal object. (Expected: %s, Actual: %s)', $oExpected, $oActual);
+            }
+
+            $oDownloadObject = $this->sdk()->headObject([
+                'Bucket' => $this->getBucket(),
+                'Key'    => sprintf('%s/%s-download.%s', $sBucket, $sFilename, $sExtension),
+            ]);
+
+            $oExpected = json_encode([
+                'ContentType'        => 'application/octet-stream',
+                'ContentDisposition' => sprintf('attachment; filename="%s"', $sFilenameDisplay),
+            ]);
+
+            $oActual = json_encode([
+                'ContentType'        => $oDownloadObject->get('ContentType'),
+                'ContentDisposition' => $oDownloadObject->get('ContentDisposition'),
+            ]);
+
+            if ($oExpected !== $oActual) {
+                $aErrors[] = sprintf('Incorrect content type for download object. (Expected: %s, Actual: %s)', $oExpected, $oActual);
+            }
+
+        } catch (\Exception $e) {
+            $sMessage  = 'AWS-SDK EXCEPTION: [objectMetaDataIsCorrect]: ' . $e->getMessage();
+            $aErrors[] = $sMessage;
+            $this->setError($sMessage);
+        }
+
+        return $aErrors;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * BUCKET METHODS
      */
 
