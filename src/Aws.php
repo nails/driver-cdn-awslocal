@@ -154,7 +154,7 @@ class Aws extends Local
         return str_replace(
             '{{bucket}}',
             $this->getBucket(),
-            $this->getSettingsForEnv()->{$sDefault} ?? $sDefault
+            $this->getSettingsForEnv()->{$sResolvedKey} ?? $sDefault
         );
     }
 
