@@ -126,6 +126,18 @@ class Aws implements Interfaces\Component\Settings
                             <td>No</td>
                             <td>The URL for processing objects (e.g. image resizing).</td>
                         </tr>
+                        <tr>
+                            <td><code>serve_dist_id</code></td>
+                            <td><code>null</code></td>
+                            <td>No</td>
+                            <td>The ID of the CloudFront distribution being used for serving objects (for invalidations)</td>
+                        </tr>
+                        <tr>
+                            <td><code>process_dist_id</code></td>
+                            <td><code>null</code></td>
+                            <td>No</td>
+                            <td>The ID of the CloudFront distribution being used for processing objects (for invalidations)</td>
+                        </tr>
                     </tbody>
                 </table>
                 EOT
