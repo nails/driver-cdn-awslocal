@@ -6,6 +6,7 @@ use Nails\Common\Helper\Form;
 use Nails\Common\Interfaces;
 use Nails\Common\Service\FormValidation;
 use Nails\Components\Setting;
+use Nails\Environment;
 use Nails\Factory;
 
 /**
@@ -15,13 +16,11 @@ use Nails\Factory;
  */
 class Aws implements Interfaces\Component\Settings
 {
-    const KEY_ACCESS_KEY         = 'access_key';
-    const KEY_ACCESS_SECRET      = 'access_secret';
-    const KEY_BUCKETS            = 'buckets';
-    const KEY_URL_SERVE          = 'uri_serve';
-    const KEY_URL_SERVE_SECURE   = 'uri_serve_secure';
-    const KEY_URL_PROCESS        = 'uri_process';
-    const KEY_URL_PROCESS_SECURE = 'uri_process_secure';
+    const KEY_ACCESS_KEY    = 'access_key';
+    const KEY_ACCESS_SECRET = 'access_secret';
+    const KEY_CONFIG        = 'config';
+    const KEY_BUCKETS       = 'buckets';
+    const KEY_URIS          = 'uris';
 
     // --------------------------------------------------------------------------
 
@@ -73,62 +72,64 @@ class Aws implements Interfaces\Component\Settings
                 FormValidation::RULE_REQUIRED,
             ]);
 
-        /** @var Setting $oBuckets */
-        $oBuckets = Factory::factory('ComponentSetting');
-        $oBuckets
-            ->setKey(static::KEY_BUCKETS)
+        /** @var Setting $oConfig */
+        $oConfig = Factory::factory('ComponentSetting');
+        $oConfig
+            ->setKey(static::KEY_CONFIG)
             ->setType(Form::FIELD_TEXTAREA)
-            ->setLabel('Buckets')
-            ->setFieldset('Buckets')
-            ->setInfo('Buckets should be specified as a JSON object with the environment as the key, and the region and bucket as the value. e.g. <code>{"PRODUCTION":"eu-west-1:my-bucket"}</code>')
-            ->setValidation([
-                FormValidation::RULE_REQUIRED,
-            ]);
-
-        /** @var Setting $oUrlServe */
-        $oUrlServe = Factory::factory('ComponentSetting');
-        $oUrlServe
-            ->setKey(static::KEY_URL_SERVE)
-            ->setLabel('Serving URL')
-            ->setFieldset('URLs')
-            ->setDefault('https://{{bucket}}.s3.amazonaws.com')
-            ->setInfo('Value will be passed into <code>siteUrl()</code>')
-            ->setValidation([
-                FormValidation::RULE_REQUIRED,
-            ]);
-
-        /** @var Setting $oUrlServeSecure */
-        $oUrlServeSecure = Factory::factory('ComponentSetting');
-        $oUrlServeSecure
-            ->setKey(static::KEY_URL_SERVE_SECURE)
-            ->setLabel('Serving URL (Secure)')
-            ->setFieldset('URLs')
-            ->setDefault('https://{{bucket}}.s3.amazonaws.com')
-            ->setInfo('Value will be passed into <code>siteUrl()</code>')
-            ->setValidation([
-                FormValidation::RULE_REQUIRED,
-            ]);
-
-        /** @var Setting $oUrlProcess */
-        $oUrlProcess = Factory::factory('ComponentSetting');
-        $oUrlProcess
-            ->setKey(static::KEY_URL_PROCESS)
-            ->setLabel('Processing URL')
-            ->setFieldset('URLs')
-            ->setDefault('cdn')
-            ->setInfo('Value will be passed into <code>siteUrl()</code>')
-            ->setValidation([
-                FormValidation::RULE_REQUIRED,
-            ]);
-
-        /** @var Setting $oUrlProcessSecure */
-        $oUrlProcessSecure = Factory::factory('ComponentSetting');
-        $oUrlProcessSecure
-            ->setKey(static::KEY_URL_PROCESS_SECURE)
-            ->setLabel('Processing URL (Secure)')
-            ->setFieldset('URLs')
-            ->setDefault('cdn')
-            ->setInfo('Value will be passed into <code>siteUrl()</code>')
+            ->setLabel('Config')
+            ->setEncrypted(true)
+            ->setFieldset('Credentials')
+            ->setPlaceholder('Example minimal config:' . PHP_EOL . json_encode([
+                Environment::get() => [
+                    'region' => 'us-east-1',
+                ],
+            ], JSON_PRETTY_PRINT))
+            ->setInfo(
+                <<<EOT
+                <p>
+                    This field is a JSON object which defines the config for each environment. It should be a key/value
+                    object where the key is the environment it applies to and the value is an object with the following
+                    properties:
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Default Value</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>region</code></td>
+                            <td><code>null</code></td>
+                            <td>Yes</td>
+                            <td>The AWS region to use for this application.</td>
+                        </tr>
+                        <tr>
+                            <td><code>bucket</code></td>
+                            <td><code>null</code></td>
+                            <td>Yes</td>
+                            <td>The bucket in which to store objects, must be in the same region.</td>
+                        </tr>
+                        <tr>
+                            <td><code>serve_uri</code></td>
+                            <td><code>https://{{bucket}}.s3.amazonaws.com</code></td>
+                            <td>No</td>
+                            <td>The URL to serve objects from.</td>
+                        </tr>
+                        <tr>
+                            <td><code>process_uri</code></td>
+                            <td><code>/cdn</code></td>
+                            <td>No</td>
+                            <td>The URL for processing objects (e.g. image resizing).</td>
+                        </tr>
+                    </tbody>
+                </table>
+                EOT
+            )
             ->setValidation([
                 FormValidation::RULE_REQUIRED,
             ]);
@@ -136,11 +137,7 @@ class Aws implements Interfaces\Component\Settings
         return [
             $oAccessKey,
             $oAccessSecret,
-            $oBuckets,
-            $oUrlServe,
-            $oUrlServeSecure,
-            $oUrlProcess,
-            $oUrlProcessSecure,
+            $oConfig,
         ];
     }
 }
