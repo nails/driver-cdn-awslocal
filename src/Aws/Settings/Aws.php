@@ -78,7 +78,6 @@ class Aws implements Interfaces\Component\Settings
             ->setKey(static::KEY_CONFIG)
             ->setType(Form::FIELD_TEXTAREA)
             ->setLabel('Config')
-            ->setEncrypted(true)
             ->setFieldset('Credentials')
             ->setPlaceholder('Example minimal config:' . PHP_EOL . json_encode([
                 Environment::get() => [
