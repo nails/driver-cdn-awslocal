@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Driver;
 
+use Aws\CloudFront\CloudFrontClient;
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
@@ -20,6 +21,11 @@ class Aws extends Local
      * The S3 SDK
      */
     protected S3Client $oS3Client;
+
+    /**
+     * The CloudFront SDK
+     */
+    protected CloudFrontClient $oCloudFrontClient;
 
     /**
      * The S3 bucket where items will be stored (not to be confused with internal buckets)
@@ -52,6 +58,29 @@ class Aws extends Local
         }
 
         return $this->oS3Client;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns an instance of the AWS CloudFront SDK
+     *
+     * @throws DriverException
+     */
+    protected function cloudFront(): CloudFrontClient
+    {
+        if (empty($this->oCloudFrontClient)) {
+            $this->oCloudFrontClient = new CloudFrontClient([
+                'version'     => 'latest',
+                'region'      => $this->getRegion(),
+                'credentials' => new Credentials(
+                    $this->getSetting('access_key'),
+                    $this->getSetting('access_secret')
+                ),
+            ]);
+        }
+
+        return $this->oCloudFrontClient;
     }
 
     // --------------------------------------------------------------------------
@@ -127,6 +156,22 @@ class Aws extends Local
             $this->getBucket(),
             $this->getSettingsForEnv()->{$sDefault} ?? $sDefault
         );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the ID of the requested CloudFront distribution
+     */
+    protected function getDist(string $sDistType): ?string
+    {
+        $sResolvedKey = match ($sDistType) {
+            'serve' => 'serve_dist_id',
+            'process' => 'process_dist_id',
+            default => throw new \InvalidArgumentException('Invalid Distribution type: ' . $sDistType),
+        };
+
+        return $this->getSettingsForEnv()->{$sResolvedKey} ?? null;
     }
 
     // --------------------------------------------------------------------------
@@ -515,6 +560,54 @@ class Aws extends Local
             $this->setError('AWS-SDK EXCEPTION: [fixObjectMetaDataErrors]: ' . $e->getMessage());
             return false;
         }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Invalidate a given object from caches
+     */
+    public function objectInvalidate(string $sFilename, string $sBucket): bool
+    {
+        //  Remove extension
+        $sFilename = strtolower(substr($sFilename, 0, strrpos($sFilename, '.')));
+
+        $distributions = array_filter([
+            $this->getSettingsForEnv()->serve_dist_id ?? null,
+            $this->getSettingsForEnv()->process_dist_id ?? null,
+        ]);
+
+        foreach ($distributions as $distribution) {
+            $this->cloudFront()->createInvalidation([
+                'DistributionId'    => $distribution,
+                'InvalidationBatch' => [
+                    'CallerReference' => sprintf('%s-%s-%s', $sBucket, $sFilename, microtime(true)),
+                    'Paths'           => [
+                        'Items'    => [
+                            //  Invalidate both normal and download as a single path, avoid paying for excess invalidations
+                            sprintf('/%s/%s*', $sBucket, $sFilename),
+                        ],
+                        'Quantity' => 1,
+                    ],
+                ],
+            ]);
+        }
+        return true;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Invalidate a given object from caches
+     */
+    public function objectRename(string $sFilename, string $sBucket, string $sFilenameDisplay, string $sMimeType): bool
+    {
+        return $this->fixObjectMetaDataErrors(
+            $sFilename,
+            $sFilenameDisplay,
+            $sBucket,
+            $sMimeType
+        );
     }
 
     // --------------------------------------------------------------------------
