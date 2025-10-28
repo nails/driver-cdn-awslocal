@@ -78,10 +78,11 @@ class Aws implements Interfaces\Component\Settings
             ->setKey(static::KEY_CONFIG)
             ->setType(Form::FIELD_TEXTAREA)
             ->setLabel('Config')
-            ->setFieldset('Credentials')
+            ->setFieldset('Config')
             ->setPlaceholder('Example minimal config:' . PHP_EOL . json_encode([
                 Environment::get() => [
-                    'region' => 'us-east-1',
+                    'region' => 'eu-west-2',
+                    'bucket' => 'my-bucket'
                 ],
             ], JSON_PRETTY_PRINT))
             ->setInfo(
