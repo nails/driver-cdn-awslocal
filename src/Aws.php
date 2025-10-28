@@ -56,21 +56,10 @@ class Aws extends Local
 
     // --------------------------------------------------------------------------
 
-    /**
-     * Returns the AWS bucket for this environment
-     *
-     * @throws DriverException
-     */
-    protected function getBucket(): string
+    public function getSettingsForEnv(): ?stdClass
     {
-        if (empty($this->sS3Bucket)) {
-            $this->sS3Bucket = $this->getRegionAndBucket()->bucket;
-            if (empty($this->sS3Bucket)) {
-                throw new DriverException('S3 Bucket has not been defined.');
-            }
-        }
-
-        return $this->sS3Bucket;
+        $oSettings = json_decode($this->getSetting()->config ?? '[]');
+        return $oSettings->{Environment::get()} ?? (object) [];
     }
 
     // --------------------------------------------------------------------------
@@ -83,7 +72,7 @@ class Aws extends Local
     protected function getRegion(): string
     {
         if (empty($this->sS3Region)) {
-            $this->sS3Region = $this->getRegionAndBucket()->region;
+            $this->sS3Region = $this->getSettingsForEnv()->region ?? '';
             if (empty($this->sS3Region)) {
                 throw new DriverException('S3 Region has not been defined.');
             }
@@ -95,26 +84,20 @@ class Aws extends Local
     // --------------------------------------------------------------------------
 
     /**
-     * Extracts the Region and Bucket from the configs
+     * Returns the AWS bucket for this environment
      *
      * @throws DriverException
      */
-    protected function getRegionAndBucket(): stdClass
+    protected function getBucket(): string
     {
-        $aSpaces = json_decode($this->getSetting('buckets'), true);
-        if (empty($aSpaces)) {
-            throw new DriverException('S3 Buckets have not been defined.');
-
-        } elseif (empty($aSpaces[Environment::get()])) {
-            throw new DriverException('No bucket defined for the ' . Environment::get() . ' environment.');
-
-        } else {
-            $sRegionSpace = explode(':', $aSpaces[Environment::get()]);
-            return (object) [
-                'region' => Helper\ArrayHelper::get(0, $sRegionSpace, ''),
-                'bucket' => Helper\ArrayHelper::get(1, $sRegionSpace, ''),
-            ];
+        if (empty($this->sS3Bucket)) {
+            $this->sS3Bucket = $this->getSettingsForEnv()->bucket ?? '';
+            if (empty($this->sS3Bucket)) {
+                throw new DriverException('S3 Bucket has not been defined.');
+            }
         }
+
+        return $this->sS3Bucket;
     }
 
     // --------------------------------------------------------------------------
@@ -128,7 +111,22 @@ class Aws extends Local
      */
     protected function getUri(string $sUriType): string
     {
-        return str_replace('{{bucket}}', $this->getBucket(), $this->getSetting('uri_' . $sUriType));
+        $sResolvedKey = match ($sUriType) {
+            'serve', 'serve_secure' => 'serve_uri',
+            'process', 'process_secure' => 'process_uri',
+            default => throw new \InvalidArgumentException('Invalid URI type: ' . $sUriType),
+        };
+
+        $sDefault = match ($sResolvedKey) {
+            'serve_uri' => 'https://{{bucket}}.s3.amazonaws.com',
+            'process_uri' => siteUrl('cdn'),
+        };
+
+        return str_replace(
+            '{{bucket}}',
+            $this->getBucket(),
+            $this->getSettingsForEnv()->{$sDefault} ?? $sDefault
+        );
     }
 
     // --------------------------------------------------------------------------
