@@ -1,9 +1,9 @@
 name: build_and_test
 on:
     push:
-        branches: [ main, develop ]
+        branches: [ main, develop, feature/pre-new-admin ]
     pull_request:
-        branches: [ main, develop ]
+        branches: [ main, develop, feature/pre-new-admin ]
 
 jobs:
     test:
@@ -32,7 +32,7 @@ jobs:
                         ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
 
             -   name: Install Composer dependencies
-                run: COMPOSER_ROOT_VERSION=dev-develop composer install --no-interaction --prefer-dist
+                run: COMPOSER_ROOT_VERSION=dev-feature/pre-new-admin composer install --no-interaction --prefer-dist
 
             -   name: Run tests
                 run: composer test
