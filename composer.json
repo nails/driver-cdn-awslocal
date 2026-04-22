@@ -25,6 +25,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
+        "php": ">=8.3",
         "aws/aws-sdk-php": "3.*",
         "nails/module-cdn": "dev-develop",
         "nails/driver-cdn-local": "dev-develop"
