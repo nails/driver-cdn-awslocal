@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Driver\Aws\Settings;
 
+use Nails\Cdn\Driver\Aws\Admin\Permission;
 use Nails\Common\Helper\Form;
 use Nails\Common\Interfaces;
 use Nails\Common\Service\FormValidation;
@@ -37,9 +38,9 @@ class Aws implements Interfaces\Component\Settings
     /**
      * @inheritDoc
      */
-    public function getPermissions(): array
+    public function getPermission(): string
     {
-        return [];
+        return Permission\Settings\Aws::class;
     }
 
     // --------------------------------------------------------------------------
